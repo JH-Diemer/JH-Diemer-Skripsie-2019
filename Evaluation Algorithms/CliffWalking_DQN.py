@@ -57,29 +57,30 @@ class DQN(nn.Module):
 
     def __init__(self, h, w, outputs):
         super(DQN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 8, kernel_size=3, stride=1)
-        self.bn1 = nn.BatchNorm2d(8)
-        self.conv2 = nn.Conv2d(8, 8, kernel_size=3, stride=1)
-        self.bn2 = nn.BatchNorm2d(8)
-        self.conv3 = nn.Conv2d(8, 8, kernel_size=3, stride=1)
-        self.bn3 = nn.BatchNorm2d(8)
+        self.conv1 = torch.nn.Conv2d(3, 16, kernel_size=3, stride=1)
+        self.pool1 = torch.nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = torch.nn.Conv2d(16, 8, kernel_size=3, stride=1)
+        self.pool2 = torch.nn.MaxPool2d(kernel_size=2, stride=2)
+        
 
-        # Number of Linear input connections depends on output of conv2d layers
-        # and therefore the input image size, so compute it.
         def conv2d_size_out(size, kernel_size, stride):
             return (size - (kernel_size - 1) - 1) // stride  + 1
-        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w,3,1),3,1),3,1)
-        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h,3,1),3,1),3,1)
+        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(conv2d_size_out(w,3,1),2,2),3,1),2,2)
+        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(conv2d_size_out(h,3,1),2,2),3,1),2,2)
         linear_input_size = convw * convh * 8
-        self.head = nn.Linear(linear_input_size, outputs)
-
-    # Called with either one element to determine next action, or a batch
-    # during optimization. Returns tensor([[left0exp,right0exp]...]).
+        print(linear_input_size)
+        self.fc1 = torch.nn.Linear(linear_input_size, 64)
+        self.head = nn.Linear(64, outputs)
+        
     def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
-        return self.head(x.view(x.size(0), -1))
+        x = F.relu(self.conv1(x))
+        x = self.pool1(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool2(x)
+        x = x.view(-1, 512)
+        x = F.relu(self.fc1(x))
+        x = self.head(x)
+        return x
 
 
     

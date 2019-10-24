@@ -266,14 +266,10 @@ for k in range(30): #loop for training runs
     policy_net = DQN(screen_height, screen_width, n_actions)
     target_net = DQN(screen_height, screen_width, n_actions)
     
-    policy_net = torch.load("NN_new_CNN_small_prob")
-    policy_net.eval()
-    target_net = torch.load("NN_new_CNN_small_prob")
-    target_net.eval()
 
-#    target_net.load_state_dict(policy_net.state_dict())
-#    target_net.eval()
-#    
+    target_net.load_state_dict(policy_net.state_dict())
+    target_net.eval()
+    
     optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
     memory = ReplayMemory(1000)
     
